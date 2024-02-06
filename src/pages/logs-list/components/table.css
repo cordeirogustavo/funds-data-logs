@@ -1,0 +1,32 @@
+.table-th {
+  @apply
+  py-2 
+  px-4
+  text-white
+  text-sm
+}
+
+.table-tr {
+  @apply
+  border-b
+  border-[#344b69]
+  pt-4
+}
+
+.table-td {
+  @apply
+  py-3 
+  px-4
+  text-white
+  text-sm
+}
+
+.table-th {
+  @apply
+  text-left
+}
+
+.hiddenTr {
+  @apply
+  hidden
+}

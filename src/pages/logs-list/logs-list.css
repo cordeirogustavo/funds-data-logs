@@ -1,0 +1,26 @@
+
+.input {
+  @apply
+  bg-transparent
+  border-0
+  border-b-2
+  border-[#344B69]
+  p-1
+  focus:outline-none
+  text-white
+}
+
+.label {
+  @apply
+  text-[#02A3CC]
+}
+
+.button {
+  @apply
+  w-full
+  h-8 
+  bg-[#02A3CC] 
+  text-white 
+  font-sans 
+  text-xl
+}
