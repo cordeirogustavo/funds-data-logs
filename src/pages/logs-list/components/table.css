@@ -30,3 +30,16 @@
   @apply
   hidden
 }
+
+.Pending {
+  @apply
+  text-secondary-warning
+}
+.Finished {
+  @apply
+  text-secondary-positive
+}
+.Dispatched{
+  @apply
+  text-secondary-negative
+}

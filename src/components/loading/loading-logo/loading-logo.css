@@ -1,0 +1,14 @@
+.loading-logo{
+    stroke-dashoffset: 1000;
+    stroke-dasharray: 400;
+    animation: animatesvg 2s linear infinite;
+}
+
+@keyframes animatesvg {
+    0% {
+        stroke-dashoffset: 0;
+    }
+    100% {
+        stroke-dashoffset: 1000;
+    }
+}

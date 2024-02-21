@@ -24,3 +24,22 @@
   font-sans 
   text-xl
 }
+
+::-webkit-scrollbar {
+  width: 8px; /* Largura da barra de rolagem */
+  border-radius: 16px;
+}
+
+/* Estilo do polegar (thumb) da barra de rolagem */
+::-webkit-scrollbar-thumb {
+  background-color: #4a5568; /* Cor do polegar */
+  border-radius: 8px; /* Arredondamento do polegar */
+}
+
+/* Estilo da faixa (track) da barra de rolagem */
+::-webkit-scrollbar-track {
+  background-color: #cbd5e0; /* Cor da faixa */
+  border-radius: 8px;
+  padding-left: 10px;
+  margin-left: 10px;
+}

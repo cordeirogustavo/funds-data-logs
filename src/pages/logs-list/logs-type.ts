@@ -1,7 +1,7 @@
-export type TLog = {
-  id: string
-  date: string
-  cnpj: string
-  description: string
-  status: string
+export interface TLog {
+  id: string;
+  date: string;
+  cnpj: string;
+  description: string;
+  status: string;
 }

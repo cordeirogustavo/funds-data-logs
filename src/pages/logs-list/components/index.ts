@@ -1,1 +1,1 @@
-export { default as TableLogs } from './table-logs/table-logs'
+export { default as TableLogs } from './table-logs/table-logs.component';
