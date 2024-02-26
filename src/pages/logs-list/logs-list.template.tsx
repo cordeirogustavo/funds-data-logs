@@ -1,12 +1,17 @@
 import { TableLogs } from './components';
 import { type TLog } from './logs-type';
 import './logs-list.css';
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { searchOnTable } from '../../hooks/hooks';
-const LogsList: React.FC = () => {
+import { fetcher } from 'services/fetcher';
+import { LoadingLogo } from '@components';
+
+const LogsList = () => {
   const statusRef = React.useRef<HTMLSelectElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
   const idRef = useRef<HTMLInputElement>(null);
+  const [logs, setLogs] = React.useState<TLog[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   React.useEffect(() => {
     if (statusRef.current != null) {
@@ -16,38 +21,30 @@ const LogsList: React.FC = () => {
       dateRef.current.value = new Date().toISOString().split('T')[0];
     }
   }, []);
-  function generateRandomLogsList(): TLog[] {
-    const logsList = [];
+  // const endDate = '2023-12-06';
+  const cnpj = '40751130000180';
 
-    for (let i = 1; i <= 100; i++) {
-      const log = {
-        id: String(i),
-        date: generateRandomDate(),
-        cnpj: generateRandomCNPJ(),
-        description: `Log ${i}`,
-        status: i % 2 === 0 ? 'Pending' : 'Finished',
-        reprocess: false,
-      };
-
-      logsList.push(log);
+  const handleClick = async () => {
+    setIsLoading(true);
+    console.log('dateRef', dateRef.current?.value);
+    console.log('idRef', idRef.current?.value);
+    try {
+      const response = await fetcher('cnpj', { cnpj });
+      const data = await response;
+      setLogs(data);
+      console.log(data);
+    } catch (error) {
+      console.error(error);
     }
-
-    return logsList;
+    setIsLoading(false);
+  };
+  function recebeEventoDoFiltro(e: React.ChangeEvent<HTMLInputElement>) {
+    console.log('fora', e.target.value);
+    setTimeout(() => {
+      console.log('debouncing', e.target.value);
+      searchOnTable('logsTableBody', e.target.value, false);
+    }, 500);
   }
-
-  function generateRandomDate() {
-    const year = Math.floor(Math.random() * 3) + 2022;
-    const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
-    const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-  }
-  function generateRandomCNPJ() {
-    const cnpj = Math.floor(Math.random() * 99999999999999);
-    return String(cnpj).padStart(14, '0');
-  }
-
-  const logs = generateRandomLogsList();
 
   return (
     <div className="flex flex-col w-full h-full">
@@ -76,7 +73,9 @@ const LogsList: React.FC = () => {
               </div>
             </div>
             <div className="flex w-full lg:w-28 mt-4 ml-auto">
-              <button className="button">Filter</button>
+              <button onClick={handleClick} className="button">
+                Filter
+              </button>
             </div>
           </div>
         </div>
@@ -90,7 +89,8 @@ const LogsList: React.FC = () => {
               className="input"
               placeholder="Search"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                searchOnTable('logsTableBody', e.target.value, false);
+                recebeEventoDoFiltro(e);
+                // searchOnTable('logsTableBody', e.target.value, false);
               }}
             />
           </div>
@@ -117,7 +117,7 @@ const LogsList: React.FC = () => {
             </select>
           </div>
         </div>
-        <TableLogs logs={logs} />
+        {isLoading ? <LoadingLogo /> : <TableLogs logs={logs} />}
       </div>
       <div className="flex justify-end">
         <button className="button w-32 m-6 mt-0">Reprocess</button>
