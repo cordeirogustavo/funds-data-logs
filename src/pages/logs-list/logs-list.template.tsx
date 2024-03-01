@@ -1,44 +1,95 @@
 import { TableLogs } from './components';
 import { type TLog } from './logs-type';
 import './logs-list.css';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { searchOnTable } from '../../hooks/hooks';
 import { fetcher } from 'services/fetcher';
 import { LoadingLogo } from '@components';
+import * as z from 'zod';
 
 const LogsList = () => {
   const statusRef = React.useRef<HTMLSelectElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
   const idRef = useRef<HTMLInputElement>(null);
+  const cnpjRef = useRef<HTMLInputElement>(null);
+  const calltypeRef = useRef<HTMLSelectElement>(null);
   const [logs, setLogs] = React.useState<TLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [inputType, setInputType] = useState('endDate' as TInputType);
 
   React.useEffect(() => {
     if (statusRef.current != null) {
       statusRef.current.value = 'all';
     }
-    if (dateRef.current != null) {
-      dateRef.current.value = new Date().toISOString().split('T')[0];
-    }
   }, []);
   // const endDate = '2023-12-06';
-  const cnpj = '40751130000180';
+  // const cnpj = '40751130000180';
+
+  const endDateSchema = z.object({
+    endDate: z.string().refine((val) => !isNaN(Date.parse(val))),
+  });
+
+  const externalIdSchema = z.object({
+    externalId: z.string(),
+  });
+
+  const cnpjSchema = z.object({
+    cnpj: z.string().regex(/^\d{14}$/),
+  });
+
+  useEffect(() => {
+    const dateNow = new Date().toISOString().split('T')[0];
+    const fetchLogs = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetcher('endDate', { endDate: dateNow });
+        const data = await response;
+        console.log(data);
+        setLogs(data);
+      } catch (error) {
+        console.error(error);
+      }
+      setIsLoading(false);
+    };
+    void fetchLogs();
+  }, []);
+  type TInputType = 'endDate' | 'externalId' | 'cnpj';
 
   const handleClick = async () => {
     setIsLoading(true);
-    console.log('dateRef', dateRef.current?.value);
-    console.log('idRef', idRef.current?.value);
+
     try {
-      const response = await fetcher('cnpj', { cnpj });
+      let validatedParams;
+
+      if (inputType === 'endDate') {
+        validatedParams = endDateSchema.parse({
+          endDate: dateRef.current?.value,
+        });
+      } else if (inputType === 'externalId') {
+        validatedParams = externalIdSchema.parse({
+          externalId: idRef.current?.value,
+        });
+      } else if (inputType === 'cnpj') {
+        validatedParams = cnpjSchema.parse({ cnpj: cnpjRef.current?.value });
+      }
+
+      const response = await fetcher(inputType, validatedParams);
+      console.log('response', response);
       const data = await response;
       setLogs(data);
       console.log(data);
     } catch (error) {
-      console.error(error);
+      if (error instanceof z.ZodError) {
+        console.error('Erro de validação:', error.issues);
+      } else {
+        console.error(error);
+      }
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
-  function recebeEventoDoFiltro(e: React.ChangeEvent<HTMLInputElement>) {
+
+  function handlerFilterList(e: React.ChangeEvent<HTMLInputElement>) {
     console.log('fora', e.target.value);
     setTimeout(() => {
       console.log('debouncing', e.target.value);
@@ -50,19 +101,23 @@ const LogsList = () => {
     <div className="flex flex-col w-full h-full">
       <div className="bg-[#1B1F25] m-6 mb-0 rounded-2xl">
         <div className="flex flex-col lg:flex-row w-full p-4 justify-between">
-          <div className="flex space-x-4 mb-4 lg:mb-0">
-            <div className="flex flex-col">
-              <p className="label">External id</p>
-              <input type="tel" ref={idRef} className="input" />
+          <div className="flex w-full lg:w-96 p-4">
+            <div className="custom-select flex flex-col w-full lg:w-96 p-4">
+              <p className="label">Status</p>
+              <select
+                ref={calltypeRef}
+                className="input pb-2"
+                onChange={() => {
+                  setInputType(calltypeRef.current?.value as TInputType);
+                }}
+              >
+                <option value="endDate">Date</option>
+                <option value="externalId">External id</option>
+                <option value="cnpj">Cnpj</option>
+              </select>
             </div>
-            <div className="flex flex-col">
-              <p className="label">CNPJ</p>
-              <input type="tel" ref={idRef} className="input" />
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0.5 lg:space-x-4">
-              <div className="flex flex-col">
+            {inputType === 'endDate' && (
+              <div className="flex flex-col w-full lg:w-64 p-4 self-end">
                 <p className="label">Date</p>
                 <input
                   data-testid="Date"
@@ -71,7 +126,21 @@ const LogsList = () => {
                   className="input p-0.5"
                 />
               </div>
-            </div>
+            )}
+            {inputType === 'cnpj' && (
+              <div className="flex flex-col w-full lg:w-64 p-4 self-end">
+                <p className="label">Cnpj</p>
+                <input type="tel" ref={cnpjRef} className="input" />
+              </div>
+            )}
+            {inputType === 'externalId' && (
+              <div className="flex flex-col w-full lg:w-64 p-4 self-end">
+                <p className="label">External id</p>
+                <input type="tel" ref={idRef} className="input" />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col self-center">
             <div className="flex w-full lg:w-28 mt-4 ml-auto">
               <button onClick={handleClick} className="button">
                 Filter
@@ -89,12 +158,11 @@ const LogsList = () => {
               className="input"
               placeholder="Search"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                recebeEventoDoFiltro(e);
-                // searchOnTable('logsTableBody', e.target.value, false);
+                handlerFilterList(e);
               }}
             />
           </div>
-          <div className="flex flex-col w-full lg:w-64 p-4">
+          <div className="custom-select flex flex-col w-full lg:w-64 p-4">
             <p className="label">Status</p>
             <select
               ref={statusRef}
