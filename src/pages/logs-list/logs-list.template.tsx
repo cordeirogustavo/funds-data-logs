@@ -3,7 +3,7 @@ import { type TLog } from './logs-type';
 import './logs-list.css';
 import React, { useEffect, useRef, useState } from 'react';
 import { searchOnTable } from '../../hooks/hooks';
-import { fetcher } from 'services/fetcher';
+import { fetcher, reprocessLogs } from 'services/fetcher';
 import { LoadingLogo } from '@components';
 import * as z from 'zod';
 
@@ -16,6 +16,8 @@ const LogsList = () => {
   const [logs, setLogs] = React.useState<TLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [inputType, setInputType] = useState('endDate' as TInputType);
+  const [error, setError] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   React.useEffect(() => {
     if (statusRef.current != null) {
@@ -60,6 +62,7 @@ const LogsList = () => {
 
     try {
       let validatedParams;
+      setError('');
 
       if (inputType === 'endDate') {
         validatedParams = endDateSchema.parse({
@@ -81,9 +84,24 @@ const LogsList = () => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.error('Erro de validação:', error.issues);
+        setError('Erro de validação');
       } else {
         console.error(error);
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleReprocess = async () => {
+    setIsLoading(true);
+    try {
+      const response = await reprocessLogs(selectedIds);
+      console.log('response', response);
+      const data = await response;
+      console.log(data);
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -131,6 +149,7 @@ const LogsList = () => {
               <div className="flex flex-col w-full lg:w-64 p-4 self-end">
                 <p className="label">Cnpj</p>
                 <input type="tel" ref={cnpjRef} className="input" />
+                {error ?? <p>{error}</p>}
               </div>
             )}
             {inputType === 'externalId' && (
@@ -142,8 +161,12 @@ const LogsList = () => {
           </div>
           <div className="flex flex-col self-center">
             <div className="flex w-full lg:w-28 mt-4 ml-auto">
-              <button onClick={handleClick} className="button">
-                Filter
+              <button
+                disabled={isLoading}
+                onClick={handleClick}
+                className="button"
+              >
+                {isLoading ? 'Loading...' : 'Filter'}
               </button>
             </div>
           </div>
@@ -185,10 +208,23 @@ const LogsList = () => {
             </select>
           </div>
         </div>
-        {isLoading ? <LoadingLogo /> : <TableLogs logs={logs} />}
+        {isLoading ? (
+          <LoadingLogo />
+        ) : (
+          <TableLogs
+            logs={logs}
+            selectedIds={selectedIds}
+            setSelectedIds={setSelectedIds}
+          />
+        )}
       </div>
       <div className="flex justify-end">
-        <button className="button w-32 m-6 mt-0">Reprocess</button>
+        <button
+          onClick={() => {handleReprocess()}}
+          className="button w-32 m-6 mt-0"
+        >
+          Reprocess
+        </button>
       </div>
     </div>
   );

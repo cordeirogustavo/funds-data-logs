@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { endpoints, type LogsEndpoints } from './endpoints';
-const bearerToken = import.meta.env.VITE_BAERER_TOKEN;
+// const bearerToken = import.meta.env.VITE_BAERER_TOKEN;
 
 const apiInstance = axios.create({
   headers: {
-    Authorization: `Bearer ${bearerToken}`,
+    'mz-internal-app': 1,
+    // Authorization: `Bearer ${bearerToken}`,
     'content-type': 'application/json',
   },
   withCredentials: true,
@@ -38,4 +39,16 @@ const buildUrl = (
   }
 
   return url;
+};
+
+export const reprocessLogs = async (ids: string[]) => {
+  try {
+    const response = await apiInstance.post(endpoints.logs.reprocess, {
+      ids,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 };

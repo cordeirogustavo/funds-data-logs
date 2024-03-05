@@ -1,11 +1,27 @@
+import { useEffect } from 'react';
 import { type TLog } from '../../logs-type';
 import '../table.css';
 
 interface TableLogProps {
   logs: TLog[];
+  selectedIds: string[];
+  setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-const TableLogs = ({ logs }: TableLogProps) => {
+const TableLogs = ({ logs, selectedIds, setSelectedIds }: TableLogProps) => {
+  const handleCheckboxChange = (id: string, isChecked: boolean) => {
+    setSelectedIds((prevIds: string[]) => {
+      if (isChecked) {
+        return [...prevIds, id];
+      } else {
+        return prevIds.filter((prevId) => prevId !== id);
+      }
+    });
+  };
+  useEffect(() => {
+    console.log(selectedIds);
+  }, [selectedIds]);
+
   return (
     <table className="w-full">
       <thead className="h-14 shadow-2xl">
@@ -29,7 +45,14 @@ const TableLogs = ({ logs }: TableLogProps) => {
               <td className={`table-td ${log.status}`}>{log.status}</td>
               <td className="table-td flex justify-center">
                 {log.status === 'Pending' && (
-                  <input type="checkbox" className="mr-2" />
+                  <input
+                    type="checkbox"
+                    className="mr-2"
+                    checked={selectedIds.includes(log.id)}
+                    onChange={(e) => {
+                      handleCheckboxChange(log.id, e.target.checked);
+                    }}
+                  />
                 )}
               </td>
             </tr>
